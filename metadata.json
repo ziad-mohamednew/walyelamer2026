@@ -1,0 +1,8 @@
+{
+  "name": "لوحة تحكم ولي الامر ",
+  "description": "نظام احترافي وسريع لإدارة السناتر التعليمية، يتيح لولي متابعة ابنائة ، والحضور والغياب بشكل ذكي مع تقارير متكاملة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

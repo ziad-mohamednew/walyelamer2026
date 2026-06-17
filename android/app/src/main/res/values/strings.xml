@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Smart Teacher</string>
+    <string name="title_activity_main">Smart Teacher</string>
+    <string name="package_name">com.smartteacher.app</string>
+    <string name="custom_url_scheme">com.smartteacher.app</string>
+</resources>
