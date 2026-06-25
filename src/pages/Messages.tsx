@@ -42,8 +42,8 @@ export const Messages: React.FC = () => {
           <BellRing size={28} className="animate-pulse" />
         </div>
         <div className="relative z-10 text-center md:text-right">
-           <h2 className="text-2xl font-bold bg-gradient-to-l from-slate-100 to-slate-400 bg-clip-text text-transparent">تنبيهات الإدارة</h2>
-           <p className="text-sm font-medium text-teal-400 mt-1">سجل كامل بجميع إشعارات الحضور والغياب المرسلة من الإدارة</p>
+           <h2 className="text-2xl font-bold bg-gradient-to-l from-slate-100 to-slate-400 bg-clip-text text-transparent">الإشعارات والتنبيهات</h2>
+           <p className="text-sm font-medium text-teal-400 mt-1">سجل كامل بجميع الإشعارات والرسائل الواردة من إدارة السنتر</p>
         </div>
       </motion.div>
 
@@ -95,7 +95,7 @@ export const Messages: React.FC = () => {
               </div>
             </div>
 
-            <div className="relative z-10 mt-2 bg-slate-900/60 p-4 rounded-xl border border-white/5 text-sm leading-relaxed text-slate-300">
+            <div className="relative z-10 mt-2 bg-white/5 p-4 rounded-xl border border-white/5 text-sm leading-relaxed text-slate-300">
                <MessageCircle size={16} className={`${iconColor} absolute top-4 left-4 opacity-20`} />
                <p className="whitespace-pre-wrap">{alert.message}</p>
             </div>

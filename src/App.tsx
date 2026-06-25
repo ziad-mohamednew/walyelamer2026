@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { Splash } from './components/Splash';
 import { Login } from './components/Login';
@@ -18,6 +18,10 @@ const MainApp: React.FC = () => {
   const { parent, loading, error } = useAppContext();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
 
   if (showSplash) {
     return <Splash onComplete={() => setShowSplash(false)} />;

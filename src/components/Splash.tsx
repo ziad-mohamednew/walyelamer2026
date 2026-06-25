@@ -13,13 +13,14 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
 
   // Fetch the center info from RTDB (or use context data if available)
   useEffect(() => {
-    fetch("https://center-management-legislator-default-rtdb.europe-west1.firebasedatabase.app/centerSettings.json")
+    fetch("https://center-management-legislator-default-rtdb.europe-west1.firebasedatabase.app/center_management_data/centerSettings.json")
       .then(r => r.json())
       .then(d => {
         if(d?.name) setCenterName(d.name);
-        if(d?.logoUrl) setLogoUrl(d.logoUrl);
+        setLogoUrl(d?.logo || '/open.png');
       }).catch(err => {
-         setCenterName('نظام المعلم الذكي');
+         setCenterName('سنتر المنارة');
+         setLogoUrl('/open.png');
       });
       
     // Wait at least a bit to show the splash before completing

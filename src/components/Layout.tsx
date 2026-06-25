@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  LayoutDashboard, Users, CalendarCheck, MessageCircle, 
-  LogOut, ShieldCheck, Menu, X, BellDot, Settings as SettingsIcon
+  LayoutDashboard, CalendarCheck, BellRing, Settings as SettingsIcon,
+  BellDot, ShieldCheck, Eye, EyeOff, Info
 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { cn } from '../lib/utils';
@@ -16,154 +16,170 @@ interface LayoutProps {
 const TABS = [
   { id: 'dashboard', label: 'الرئيسية', icon: LayoutDashboard },
   { id: 'attendance', label: 'سجل المتابعة', icon: CalendarCheck },
-  { id: 'messages', label: 'تواصل مع الإدارة', icon: MessageCircle },
+  { id: 'messages', label: 'الإشعارات', icon: BellRing },
   { id: 'settings', label: 'الإعدادات', icon: SettingsIcon },
 ];
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) => {
-  const { parent, logout, data, myChildren } = useAppContext();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { 
+    parent, data, myChildren, showPhone, setShowPhone, 
+    hasSeenHint, setHasSeenHint, lastUpdate 
+  } = useAppContext();
+  
+  const [showHintLocal, setShowHintLocal] = useState(false);
 
-  // Future feature: unread messages from admin
-  const getUnreadMessages = () => {
-    return 0; // Placeholder
+  useEffect(() => {
+    // Logic for showing hint after 2nd run
+    const runCount = parseInt(localStorage.getItem('app_run_count') || '0');
+    if (!hasSeenHint && runCount >= 1) {
+      // Check last dismissed time (if any)
+      const lastDismissed = localStorage.getItem('hint_dismissed_at');
+      const oneWeek = 7 * 24 * 60 * 60 * 1000;
+      if (!lastDismissed || (Date.now() - parseInt(lastDismissed)) > oneWeek) {
+        setShowHintLocal(true);
+      }
+    }
+    localStorage.setItem('app_run_count', (runCount + 1).toString());
+  }, [hasSeenHint]);
+
+  const dismissHint = () => {
+    setShowHintLocal(false);
+    setHasSeenHint(true);
+    localStorage.setItem('hint_dismissed_at', Date.now().toString());
   };
 
-  const closeSidebar = () => setIsSidebarOpen(false);
+  const centerName = data?.centerSettings?.name || 'سنتر المنارة';
+  const centerLogo = data?.centerSettings?.logo || '/open.png';
+
+  const activeIndex = TABS.findIndex(t => t.id === activeTab);
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col md:flex-row overflow-hidden text-slate-100 relative">
-      <div className="absolute top-[-20%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-emerald-500/10 blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-teal-500/10 blur-[120px] pointer-events-none"></div>
-      
-      {/* Mobile Header */}
-      <header className="md:hidden glass-card mx-2 mt-2 px-4 py-3 flex items-center justify-between sticky top-2 z-40">
-        <div className="flex items-center">
-          <ShieldCheck className="text-emerald-400 ml-2" size={24} />
-          <span className="font-bold text-lg bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">بوابة ولي الأمر</span>
+    <div className="min-h-screen bg-[#0b141a] text-slate-100 font-sans overflow-hidden">
+      {/* Background Blurs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[70vw] h-[70vw] rounded-full bg-emerald-500/5 blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[70vw] h-[70vw] rounded-full bg-teal-500/5 blur-[120px]"></div>
+      </div>
+
+      {/* Fixed Top Header */}
+      <header className="glass-header-container px-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center p-0.5">
+             <img src={centerLogo} alt="Logo" className="w-full h-full object-contain" onError={(e) => (e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/2940/2940651.png')} />
+          </div>
+          <div 
+            className="cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => window.open('https://wa.me/201031123461', '_blank')}
+          >
+            <h1 className="text-xs font-bold bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent truncate max-w-[120px]">
+              {centerName}
+            </h1>
+            <p className="text-[8px] font-medium text-slate-500 uppercase tracking-tighter mt-[-1px]">
+              Manara by Graphiqa
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg bg-white/5 text-emerald-400 border border-white/10 shadow-sm backdrop-blur-md">
-            <Menu size={24} />
-          </button>
+
+        <div className="mr-auto flex items-center gap-3">
+          <div className="flex flex-col items-end">
+            <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg border border-white/10">
+              <p className={cn(
+                "text-[10px] font-bold tracking-wider transition-all duration-300",
+                !showPhone && "blur-[3px] select-none"
+              )} dir="ltr">
+                {parent?.phone}
+              </p>
+              <button onClick={() => setShowPhone(!showPhone)} className="text-slate-500 hover:text-emerald-400">
+                {showPhone ? <EyeOff size={10} /> : <Eye size={10} />}
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded-lg">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[9px] font-bold text-emerald-400">مباشر</span>
+          </div>
         </div>
       </header>
 
-      {/* Sidebar Overlay (Mobile) */}
+      {/* Hint Tooltip */}
       <AnimatePresence>
-        {isSidebarOpen && (
+        {showHintLocal && (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeSidebar}
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-40 md:hidden"
-          />
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-[85px] left-1/2 -translate-x-1/2 z-[110] w-[calc(100%-40px)] max-w-[360px]"
+          >
+            <div className="glass-card p-4 border-emerald-500/30 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl" />
+              <div className="flex items-start gap-3 relative z-10">
+                <div className="p-2 bg-emerald-500/20 rounded-xl text-emerald-400">
+                  <Info size={18} />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-100">تلميح الخصوصية</h4>
+                  <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                    يمكنك إخفاء رقم هاتفك المسجل من شريط العنوان العلوي أو من قسم الإعدادات لزيادة الخصوصية.
+                  </p>
+                  <button 
+                    onClick={dismissHint}
+                    className="mt-3 px-4 py-1.5 bg-emerald-500 text-slate-900 text-[9px] font-bold rounded-lg shadow-lg shadow-emerald-500/20"
+                  >
+                    فهمت، شكراً
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
-      <aside className={cn(
-        "fixed inset-y-0 right-0 z-50 w-[260px] glass-panel border-l border-white/10 transform transition-transform duration-300 ease-in-out flex flex-col md:relative md:translate-x-0 shadow-2xl shadow-black/50 py-[1.5rem] font-sans md:m-4 md:rounded-3xl",
-        isSidebarOpen ? "translate-x-0" : "translate-x-full"
-      )}>
-        <div className="px-6 pb-6 flex items-center justify-between border-b border-white/5 mb-4">
-          <div className="flex items-center">
-            <ShieldCheck className="text-emerald-400 ml-2" size={28} />
-            <div className="font-bold text-[1.15rem] leading-tight bg-gradient-to-l from-emerald-300 to-teal-100 bg-clip-text text-transparent">
-              بوابة ولي الأمر
-            </div>
-          </div>
-          <button onClick={closeSidebar} className="md:hidden p-2 text-slate-400 hover:bg-white/10 rounded-lg transition-colors">
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="px-6 pb-6">
-          <p className="text-xs font-medium text-slate-400 mb-1">الرقم المسجل</p>
-          <p className="text-sm font-bold text-emerald-300 tracking-wider" dir="ltr">{parent?.phone}</p>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto space-y-1.5 px-3">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  closeSidebar();
-                }}
-                className={cn(
-                  "w-full flex items-center py-3 px-4 transition-all duration-300 relative group font-bold text-sm cursor-pointer rounded-xl",
-                  isActive 
-                    ? "bg-emerald-500/20 text-emerald-100 border border-emerald-500/30 shadow-[0_4px_16px_rgba(16,185,129,0.15)]" 
-                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent"
-                )}
-              >
-                <Icon size={20} className={cn("ml-3 shrink-0", isActive ? "text-emerald-400" : "text-slate-500 group-hover:text-emerald-300 transition-colors")} />
-                <span>{tab.label}</span>
-                {tab.id === 'messages' && getUnreadMessages() > 0 && (
-                  <span className="mr-auto w-5 h-5 flex items-center justify-center bg-emerald-500 text-slate-900 text-[10px] rounded-full font-bold shadow-md shadow-emerald-500/20">
-                    {getUnreadMessages()}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 mt-auto">
-          <button 
-            onClick={logout}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white shadow-lg shadow-red-500/10 font-bold transition-all cursor-pointer rounded-xl"
-          >
-            <LogOut size={18} className="shrink-0" />
-            <span>تسجيل الخروج</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative z-10">
-        {/* Desktop Header */}
-        <header className="hidden md:flex items-center justify-between px-8 py-5 shrink-0 z-30">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-100">
-              {TABS.find(t => t.id === activeTab)?.label}
-            </h1>
-            <p className="text-sm font-medium text-emerald-400 mt-1 flex items-center gap-2">
-              <BellDot size={14} />
-              متابعة مباشرة لأبنائك ({myChildren.length})
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-             <div className="text-left">
-                <p className="text-xs text-slate-400">الجلسة آمنة</p>
-                <p className="text-sm font-bold text-slate-200" dir="ltr">{parent?.phone}</p>
-             </div>
-             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                <Users className="text-slate-900" size={20} />
-             </div>
-          </div>
-        </header>
-
-        <div className="flex-1 overflow-y-auto p-4 md:px-8 md:pb-8 relative">
+      {/* Main Content Area */}
+      <main className="pt-[85px] pb-[100px] h-screen overflow-y-auto px-4 md:px-8">
+        <div className="max-w-4xl mx-auto py-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 15, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -15, scale: 0.98 }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="max-w-7xl mx-auto h-full"
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: -10 }}
+              transition={{ duration: 0.3 }}
             >
               {children}
             </motion.div>
           </AnimatePresence>
         </div>
       </main>
+
+      {/* Fixed Glass Bottom Navigation */}
+      <div className="glass-nav-container">
+        <div className="glass-indicator" style={{ transform: `translateX(${-activeIndex * 100}%)` }}>
+          <div className="indicator-glow"></div>
+        </div>
+        
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <div 
+              key={tab.id} 
+              className="nav-item"
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <Icon className={cn("nav-icon", isActive && "active-icon")} />
+              {isActive && (
+                <motion.span 
+                  layoutId="nav-label"
+                  className="absolute bottom-2.5 text-[7px] font-bold text-emerald-400"
+                >
+                  {tab.label}
+                </motion.span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

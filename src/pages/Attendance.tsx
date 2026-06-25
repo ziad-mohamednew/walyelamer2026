@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { CalendarCheck, ClipboardList, CheckCircle, XCircle, AlertCircle, AlertTriangle, Presentation, PieChart } from 'lucide-react';
-import { motion } from 'motion/react';
+import { CalendarCheck, ClipboardList, CheckCircle, XCircle, AlertCircle, AlertTriangle, Presentation, PieChart, BookOpen } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const COLORS = ['#10b981', '#f43f5e', '#f59e0b']; // Present, Absent, Excused
 
@@ -65,6 +65,31 @@ export const Attendance: React.FC = () => {
     return tableData.filter(r => r.studentId === filterStudent);
   }, [tableData, filterStudent]);
 
+  const StatusBadge = ({ status }: { status: string }) => {
+    switch (status) {
+      case 'present':
+        return (
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-500/30 shadow-[0_2px_12px_rgba(16,185,129,0.15)]">
+            <CheckCircle size={12} /> حاضـر
+          </span>
+        );
+      case 'absent':
+        return (
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-rose-400 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30 shadow-[0_2px_12px_rgba(244,63,94,0.15)]">
+            <XCircle size={12} /> غائب
+          </span>
+        );
+      case 'excused':
+        return (
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30 shadow-[0_2px_12px_rgba(245,158,11,0.15)]">
+            <AlertCircle size={12} /> عـذر
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-6 pb-10 text-slate-100 mix-blend-plus-lighter relative z-10">
       <motion.div 
@@ -86,7 +111,7 @@ export const Attendance: React.FC = () => {
 
         <div className="relative z-10 w-full md:w-auto">
           <select 
-            className="w-full md:w-auto px-5 py-3 border border-white/10 rounded-xl bg-slate-900/80 text-slate-200 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all cursor-pointer shadow-inner backdrop-blur-md font-medium"
+            className="w-full md:w-auto px-5 py-3 border border-white/10 rounded-xl bg-transparent text-slate-200 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all cursor-pointer shadow-inner backdrop-blur-md font-medium"
             value={filterStudent}
             onChange={(e) => setFilterStudent(e.target.value)}
           >
@@ -144,72 +169,122 @@ export const Attendance: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Detailed Table */}
+        {/* Detailed Table Section */}
         <motion.div 
            initial={{ opacity: 0, y: 20 }}
            animate={{ opacity: 1, y: 0 }}
            transition={{ delay: 0.1 }}
-           className="lg:col-span-2 glass-panel p-6 border border-white/5"
+           className="lg:col-span-2 space-y-4"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <ClipboardList size={22} className="text-emerald-400" />
-            <h3 className="text-lg font-bold text-slate-200">التفاصيل اليومية</h3>
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-3">
+              <ClipboardList size={22} className="text-emerald-400" />
+              <h3 className="text-lg font-bold text-slate-200">التفاصيل اليومية</h3>
+            </div>
+            <span className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">
+              Items: {filteredTableData.length}
+            </span>
           </div>
           
-          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/50 shadow-inner">
-            <table className="w-full text-right border-collapse min-w-[600px]">
+          {/* Desktop Table View */}
+          <div className="hidden md:block glass-card overflow-hidden">
+            <table className="w-full text-right border-collapse">
                <thead>
-                 <tr className="bg-slate-800/80 border-b border-white/5 text-slate-400 text-sm">
-                   <th className="p-4 font-bold">التاريخ</th>
-                   <th className="p-4 font-bold">الابن</th>
-                   <th className="p-4 font-bold">المجموعة</th>
-                   <th className="p-4 font-bold text-center">حالة الحضور</th>
+                 <tr className="bg-white/5 border-b border-white/10 text-slate-400 text-[10px] uppercase tracking-widest font-bold">
+                   <th className="p-5">التاريخ</th>
+                   <th className="p-5">الابن</th>
+                   <th className="p-5">المجموعة والمادة</th>
+                   <th className="p-5 text-center">حالة الحضور</th>
                  </tr>
                </thead>
                <tbody className="divide-y divide-white/5">
-                 {filteredTableData.length > 0 ? filteredTableData.map(record => (
-                   <tr key={record.id} className="hover:bg-slate-800/60 transition-colors group">
-                     <td className="p-4 text-slate-200 font-medium">
-                       {new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium' }).format(new Date(record.date))}
-                     </td>
-                     <td className="p-4 font-bold text-emerald-100 group-hover:text-emerald-300 transition-colors">
-                        {record.studentName}
-                     </td>
-                     <td className="p-4">
-                       <span className="inline-block px-3 py-1.5 bg-slate-900 text-slate-300 rounded-lg text-xs font-semibold border border-white/5 shadow-inner">
-                         {record.groupName} - {record.subject}
-                       </span>
-                     </td>
-                     <td className="p-4 flex justify-center">
-                       {record.status === 'present' && (
-                         <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 px-4 py-1.5 rounded-xl border border-emerald-500/20 shadow-[0_2px_10px_rgba(16,185,129,0.1)]">
-                           <CheckCircle size={14} /> حاضـر
+                 <AnimatePresence mode="popLayout">
+                   {filteredTableData.length > 0 ? filteredTableData.map((record, idx) => (
+                     <motion.tr 
+                       layout
+                       initial={{ opacity: 0, y: 10 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       exit={{ opacity: 0, scale: 0.95 }}
+                       transition={{ delay: idx * 0.02 }}
+                       key={record.id} 
+                       className="hover:bg-white/5 transition-colors group"
+                     >
+                       <td className="p-5 text-[11px] font-mono text-slate-400">
+                         {new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium' }).format(new Date(record.date))}
+                       </td>
+                       <td className="p-5 text-sm font-bold text-slate-100 group-hover:text-emerald-300 transition-colors">
+                          {record.studentName}
+                       </td>
+                       <td className="p-5">
+                         <span className="inline-block px-3 py-1 bg-white/5 text-slate-300 rounded-lg text-[10px] font-bold border border-white/10">
+                           {record.groupName} — {record.subject}
                          </span>
-                       )}
-                       {record.status === 'absent' && (
-                         <span className="flex items-center gap-1.5 text-xs font-bold text-rose-400 bg-rose-500/10 px-4 py-1.5 rounded-xl border border-rose-500/20 shadow-[0_2px_10px_rgba(244,63,94,0.1)]">
-                           <XCircle size={14} /> غائب
-                         </span>
-                       )}
-                       {record.status === 'excused' && (
-                         <span className="flex items-center gap-1.5 text-xs font-bold text-amber-400 bg-amber-500/10 px-4 py-1.5 rounded-xl border border-amber-500/20 shadow-[0_2px_10px_rgba(245,158,11,0.1)]">
-                           <AlertCircle size={14} /> عـذر
-                         </span>
-                       )}
-                     </td>
-                   </tr>
-                 )) : (
-                   <tr>
-                     <td colSpan={4} className="p-12 text-center text-slate-500 font-medium">
-                       <div className="flex flex-col items-center justify-center">
-                          <ClipboardList size={40} className="mb-3 opacity-20" />
-                          <p>لا توجد تفاصيل حضور {filterStudent !== 'all' && 'لهذا الابن'}</p>
-                       </div>
-                     </td>
-                   </tr>
-                 )}
+                       </td>
+                       <td className="p-5">
+                          <div className="flex justify-center">
+                            <StatusBadge status={record.status} />
+                          </div>
+                       </td>
+                     </motion.tr>
+                   )) : (
+                     <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                       <td colSpan={4} className="p-20 text-center">
+                         <div className="flex flex-col items-center justify-center text-slate-600">
+                            <ClipboardList size={48} className="mb-4 opacity-20" />
+                            <p className="text-sm font-bold">لا توجد تفاصيل حضور متاحة</p>
+                         </div>
+                       </td>
+                     </motion.tr>
+                   )}
+                 </AnimatePresence>
                </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            <AnimatePresence mode="popLayout">
+              {filteredTableData.length > 0 ? filteredTableData.map((record, idx) => (
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: idx * 0.04 }}
+                  key={record.id}
+                  className="glass-card p-5 border-white/10 relative overflow-hidden group active:scale-[0.98] transition-transform"
+                >
+                  <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500/20 group-hover:bg-emerald-500/40 transition-colors" />
+                  
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="text-right">
+                      <h4 className="text-sm font-bold text-slate-100 mb-1">{record.studentName}</h4>
+                      <p className="text-[10px] text-slate-500 font-mono">
+                        {new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium' }).format(new Date(record.date))}
+                      </p>
+                    </div>
+                    <StatusBadge status={record.status} />
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                      <ClipboardList size={16} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-500 font-bold mb-0.5">المجموعة والمادة</p>
+                      <p className="text-[11px] font-bold text-slate-200">
+                        {record.groupName} — {record.subject}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )) : (
+                <div className="glass-card p-12 text-center">
+                  <ClipboardList className="mx-auto text-slate-700 mb-4 opacity-30" size={48} />
+                  <p className="text-slate-500 font-bold">لا توجد سجلات</p>
+                </div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
       </div>

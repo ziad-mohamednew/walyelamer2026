@@ -21,6 +21,8 @@ export interface Student {
   groupIds: string[];
   teacherIds: string[];
   status: string;
+  stage?: string;
+  balance?: number;
 }
 
 export interface Group {
@@ -58,6 +60,14 @@ export interface ParentMessage {
   isNew: boolean;
 }
 
+export interface CenterSettings {
+  name: string;
+  logo: string;
+  phone: string;
+  academicStages?: string[];
+  tips?: string[];
+}
+
 export interface AppData {
   teachers: Teacher[];
   students: Student[];
@@ -65,4 +75,5 @@ export interface AppData {
   attendance: AttendanceRecord[];
   whatsAppLogs: WhatsAppLog[];
   messages: ParentMessage[];
+  centerSettings?: CenterSettings;
 }

@@ -59,6 +59,17 @@ export async function fetchAppData(forceRefresh = false): Promise<AppData> {
       attendance: toArray(data.attendance),
       whatsAppLogs: toArray(data.whatsAppLogs),
       messages: generateMockMessages(data),
+      centerSettings: data.centerSettings || {
+        name: "سنتر المنارة",
+        logo: "/open.png",
+        phone: "01000000000",
+        tips: [
+          "المتابعة اليومية سر النجاح والتفوق.",
+          "تنظيم الوقت يساعد الطالب على التحصيل بشكل أفضل.",
+          "التواصل المستمر مع المعلمين يحل المشكلات مبكراً.",
+          "البيئة الهادئة في المنزل تدعم التركيز الدراسي."
+        ]
+      }
     };
 
     localStorage.setItem(CACHE_KEY, JSON.stringify({

@@ -142,7 +142,7 @@ export const Login: React.FC = () => {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full pl-4 pr-12 py-3.5 rounded-xl border border-white/5 bg-slate-800/50 focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner"
+                      className="w-full pl-4 pr-12 py-3.5 rounded-xl border border-white/5 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner"
                       placeholder="أدخل رقم الهاتف المسجل"
                       dir="ltr"
                     />
@@ -156,7 +156,7 @@ export const Login: React.FC = () => {
                       type={showPassword ? "text" : "password"}
                       value={oldPasscode}
                       onChange={(e) => setOldPasscode(e.target.value)}
-                      className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-white/5 bg-slate-800/50 focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all placeholder:text-slate-500"
+                      className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-white/5 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all placeholder:text-slate-500"
                       dir="ltr"
                     />
                     <Lock className="absolute right-4 top-3.5 text-slate-400 group-focus-within:text-emerald-400" size={20} />
@@ -169,7 +169,7 @@ export const Login: React.FC = () => {
                       type={showPassword ? "text" : "password"}
                       value={newPasscode}
                       onChange={(e) => setNewPasscode(e.target.value)}
-                      className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-white/5 bg-slate-800/50 focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all placeholder:text-slate-500"
+                      className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-white/5 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all placeholder:text-slate-500"
                       placeholder="4 أحرف أو أرقام على الأقل"
                       dir="ltr"
                     />
@@ -218,14 +218,14 @@ export const Login: React.FC = () => {
           >
             <label className="block text-sm font-semibold text-slate-300 mb-2">رقم ولي الأمر</label>
             <div className="relative group">
-              <input 
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full pl-4 pr-12 py-3.5 rounded-xl border border-white/5 bg-slate-800/50 focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner"
-                placeholder="أدخل رقم الهاتف المسجل"
-                dir="ltr"
-              />
+                <input 
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full pl-4 pr-12 py-3.5 rounded-xl border border-white/5 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner"
+                  placeholder="أدخل رقم الهاتف المسجل"
+                  dir="ltr"
+                />
               <Phone className="absolute right-4 top-3.5 text-slate-400 group-focus-within:text-emerald-400 transition-colors" size={20} />
             </div>
           </motion.div>
@@ -237,14 +237,14 @@ export const Login: React.FC = () => {
           >
             <label className="block text-sm font-semibold text-slate-300 mb-2">كلمة المرور</label>
             <div className="relative group">
-              <input 
-                type={showPassword ? "text" : "password"}
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-white/5 bg-slate-800/50 focus:bg-slate-800 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner"
-                placeholder="4 أحرف أو أرقام على الأقل"
-                dir="ltr"
-              />
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-white/5 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner"
+                  placeholder="4 أحرف أو أرقام على الأقل"
+                  dir="ltr"
+                />
               <Lock className="absolute right-4 top-3.5 text-slate-400 group-focus-within:text-emerald-400 transition-colors" size={20} />
               <button 
                 type="button"

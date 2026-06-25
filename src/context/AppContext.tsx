@@ -10,6 +10,11 @@ interface AppContextType {
   login: (phone: string, passcode: string, remember: boolean) => Promise<boolean>;
   logout: () => void;
   myChildren: Student[];
+  showPhone: boolean;
+  setShowPhone: (val: boolean) => void;
+  hasSeenHint: boolean;
+  setHasSeenHint: (val: boolean) => void;
+  lastUpdate: Date;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -19,6 +24,17 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   const [parent, setParent] = useState<ParentSession | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showPhone, setShowPhone] = useState<boolean>(localStorage.getItem('show_phone') === 'true');
+  const [hasSeenHint, setHasSeenHint] = useState<boolean>(localStorage.getItem('has_seen_hint') === 'true');
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    localStorage.setItem('show_phone', String(showPhone));
+  }, [showPhone]);
+
+  useEffect(() => {
+    localStorage.setItem('has_seen_hint', String(hasSeenHint));
+  }, [hasSeenHint]);
 
   useEffect(() => {
     // Load initial data and session
@@ -68,10 +84,21 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
                 attendance: toArray(rawData.attendance),
                 whatsAppLogs: toArray(rawData.whatsAppLogs),
                 messages: [], // Or handle messages appropriately
-                groupsData: rawData.groups // Keep if needed
+                centerSettings: rawData.centerSettings || {
+                  name: "سنتر المنارة",
+                  logo: "/open.png",
+                  phone: "01000000000",
+                  tips: [
+                    "المتابعة اليومية سر النجاح والتفوق.",
+                    "تنظيم الوقت يساعد الطالب على التحصيل بشكل أفضل.",
+                    "التواصل المستمر مع المعلمين يحل المشكلات مبكراً.",
+                    "البيئة الهادئة في المنزل تدعم التركيز الدراسي."
+                  ]
+                }
               };
               
               setData(processedData);
+              setLastUpdate(new Date());
             }
           });
         } catch(e) {
@@ -115,7 +142,10 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   }, [data, parent]);
 
   return (
-    <AppContext.Provider value={{ data, parent, loading, error, login, logout, myChildren }}>
+    <AppContext.Provider value={{ 
+      data, parent, loading, error, login, logout, myChildren, 
+      showPhone, setShowPhone, hasSeenHint, setHasSeenHint, lastUpdate 
+    }}>
       {children}
     </AppContext.Provider>
   );
