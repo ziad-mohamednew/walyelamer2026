@@ -11,7 +11,7 @@
 @layer base {
   body {
     direction: rtl;
-    background-color: #0b141a;
+    background: linear-gradient(180deg, #0f1c24 0%, #0b141a 100%);
     -webkit-tap-highlight-color: transparent;
   }
 }
@@ -66,7 +66,7 @@
     align-items: center;
     padding: 0 8px;
     box-sizing: border-box;
-    background: rgba(255, 255, 255, 0.03);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 32px;
@@ -87,7 +87,7 @@
     align-items: center;
     padding: 0 16px;
     box-sizing: border-box;
-    background: rgba(255, 255, 255, 0.03);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 32px;

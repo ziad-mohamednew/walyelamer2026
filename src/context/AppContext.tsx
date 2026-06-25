@@ -86,7 +86,7 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
                 messages: [], // Or handle messages appropriately
                 centerSettings: rawData.centerSettings || {
                   name: "سنتر المنارة",
-                  logo: "/open.png",
+                  logo: "https://cdn-icons-png.flaticon.com/512/2940/2940651.png",
                   phone: "01000000000",
                   tips: [
                     "المتابعة اليومية سر النجاح والتفوق.",
