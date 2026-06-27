@@ -61,7 +61,7 @@ export async function fetchAppData(forceRefresh = false): Promise<AppData> {
       messages: generateMockMessages(data),
       centerSettings: data.centerSettings || {
         name: "سنتر المنارة",
-        logo: "/open.png",
+        logo: "/icon.png",
         phone: "01000000000",
         tips: [
           "المتابعة اليومية سر النجاح والتفوق.",

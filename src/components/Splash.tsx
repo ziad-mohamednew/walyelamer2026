@@ -17,10 +17,10 @@ export const Splash: React.FC<SplashProps> = ({ onComplete }) => {
       .then(r => r.json())
       .then(d => {
         if(d?.name) setCenterName(d.name);
-        setLogoUrl(d?.logo || '/open.png');
+        setLogoUrl(d?.logo || '/icon.png');
       }).catch(err => {
          setCenterName('سنتر المنارة');
-         setLogoUrl('/open.png');
+         setLogoUrl('/icon.png');
       });
       
     // Wait at least a bit to show the splash before completing

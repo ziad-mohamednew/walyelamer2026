@@ -49,7 +49,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTa
   };
 
   const centerName = data?.centerSettings?.name || 'سنتر المنارة';
-  const centerLogo = data?.centerSettings?.logo || '/open.png';
+  const centerLogo = data?.centerSettings?.logo || '/icon.png';
 
   const activeIndex = TABS.findIndex(t => t.id === activeTab);
 

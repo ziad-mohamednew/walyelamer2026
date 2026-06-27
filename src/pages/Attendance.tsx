@@ -9,6 +9,7 @@ const COLORS = ['#10b981', '#f43f5e', '#f59e0b']; // Present, Absent, Excused
 export const Attendance: React.FC = () => {
   const { myChildren, data } = useAppContext();
   const [filterStudent, setFilterStudent] = useState<string>('all');
+  const [timeRange, setTimeRange] = useState<'today' | 'week'>('today');
 
   const { pieData, tableData } = useMemo(() => {
     let present = 0;
@@ -24,6 +25,27 @@ export const Attendance: React.FC = () => {
     const records = data?.attendance.filter(a => relevantGroups.has(a.groupId)) || [];
 
     records.forEach(r => {
+      // Filter by time range
+      const recordDate = new Date(r.date);
+      const recordDateStr = r.date; // YYYY-MM-DD
+      
+      if (timeRange === 'today') {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (recordDateStr !== todayStr) {
+          // Double check with actual Date object to prevent timezone mismatches
+          const today = new Date();
+          const isSameDay = recordDate.getDate() === today.getDate() &&
+                           recordDate.getMonth() === today.getMonth() &&
+                           recordDate.getFullYear() === today.getFullYear();
+          if (!isSameDay) return;
+        }
+      } else if (timeRange === 'week') {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+        if (recordDate < sevenDaysAgo) return;
+      }
+
       const g = data?.groups.find(g => g.id === r.groupId);
       if (!g) return;
 
@@ -58,7 +80,7 @@ export const Attendance: React.FC = () => {
     ].filter(d => d.value > 0);
 
     return { pieData: pData, tableData: flatRecords };
-  }, [myChildren, data]);
+  }, [myChildren, data, timeRange]);
 
   const filteredTableData = useMemo(() => {
     if (filterStudent === 'all') return tableData;
@@ -176,14 +198,36 @@ export const Attendance: React.FC = () => {
            transition={{ delay: 0.1 }}
            className="lg:col-span-2 space-y-4"
         >
-          <div className="flex items-center justify-between px-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
             <div className="flex items-center gap-3">
               <ClipboardList size={22} className="text-emerald-400" />
               <h3 className="text-lg font-bold text-slate-200">التفاصيل اليومية</h3>
             </div>
-            <span className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">
-              Items: {filteredTableData.length}
-            </span>
+            
+            <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 self-start sm:self-auto shadow-inner">
+              <button
+                type="button"
+                onClick={() => setTimeRange('today')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-250 cursor-pointer ${
+                  timeRange === 'today'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                اليوم فقط
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeRange('week')}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-250 cursor-pointer ${
+                  timeRange === 'week'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/10'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                آخر أسبوع
+              </button>
+            </div>
           </div>
           
           {/* Desktop Table View */}
@@ -227,11 +271,20 @@ export const Attendance: React.FC = () => {
                        </td>
                      </motion.tr>
                    )) : (
-                     <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                     <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} key="empty-desktop">
                        <td colSpan={4} className="p-20 text-center">
-                         <div className="flex flex-col items-center justify-center text-slate-600">
-                            <ClipboardList size={48} className="mb-4 opacity-20" />
-                            <p className="text-sm font-bold">لا توجد تفاصيل حضور متاحة</p>
+                         <div className="flex flex-col items-center justify-center text-slate-400">
+                            <ClipboardList size={48} className="mb-4 opacity-30 text-emerald-400" />
+                            <p className="text-sm font-bold mb-3">لا توجد حصص مسجلة لليوم حتى الآن</p>
+                            {timeRange === 'today' && (
+                              <button
+                                type="button"
+                                onClick={() => setTimeRange('week')}
+                                className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                              >
+                                عرض سجلات آخر أسبوع
+                              </button>
+                            )}
                          </div>
                        </td>
                      </motion.tr>
@@ -279,9 +332,18 @@ export const Attendance: React.FC = () => {
                   </div>
                 </motion.div>
               )) : (
-                <div className="glass-card p-12 text-center">
-                  <ClipboardList className="mx-auto text-slate-700 mb-4 opacity-30" size={48} />
-                  <p className="text-slate-500 font-bold">لا توجد سجلات</p>
+                <div className="glass-card p-12 text-center" key="empty-mobile">
+                  <ClipboardList className="mx-auto text-emerald-400 mb-4 opacity-30" size={48} />
+                  <p className="text-slate-300 font-bold mb-3">لا توجد حصص مسجلة لليوم</p>
+                  {timeRange === 'today' && (
+                    <button
+                      type="button"
+                      onClick={() => setTimeRange('week')}
+                      className="px-4 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    >
+                      عرض سجلات آخر أسبوع
+                    </button>
+                  )}
                 </div>
               )}
             </AnimatePresence>

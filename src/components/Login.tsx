@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LogIn, Phone, Lock, AlertCircle, ShieldCheck, Eye, EyeOff, CheckSquare } from 'lucide-react';
+import { LogIn, Phone, Lock, AlertCircle, ShieldCheck, Eye, EyeOff, CheckSquare, Clock } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 export const Login: React.FC = () => {
@@ -15,8 +15,57 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Cooldown & Brute Force Protection States
+  const [attempts, setAttempts] = useState<number>(() => {
+    return Number(localStorage.getItem('login_attempts') || '0');
+  });
+  const [cooldownUntil, setCooldownUntil] = useState<number>(() => {
+    return Number(localStorage.getItem('login_cooldown_until') || '0');
+  });
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  // Timer Effect to update time left for cooldown
+  useEffect(() => {
+    const updateTimer = () => {
+      const remaining = cooldownUntil - Date.now();
+      if (remaining > 0) {
+        setTimeLeft(Math.ceil(remaining / 1000));
+      } else {
+        setTimeLeft(0);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownUntil]);
+
+  // Format seconds to human-readable string in Arabic
+  const formatTimeLeft = (seconds: number) => {
+    if (seconds <= 0) return '';
+    if (seconds >= 3600) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.ceil((seconds % 3600) / 60);
+      return `متبقي ${hours} ساعة و ${minutes} دقيقة`;
+    }
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `متبقي ${minutes}:${secs.toString().padStart(2, '0')} دقيقة`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if cooldown is active
+    if (timeLeft > 0) {
+      if (attempts >= 10) {
+        setError(`تم حظر محاولات تسجيل الدخول بالكامل (تجاوزت ١٠ محاولات). يرجى الانتظار لمدة يوم كامل. ${formatTimeLeft(timeLeft)}.`);
+      } else {
+        setError(`الحظر المؤقت مفعل حالياً لحماية حسابك. يرجى الانتظار ${formatTimeLeft(timeLeft)} قبل المحاولة مجدداً.`);
+      }
+      return;
+    }
+
     if (!phone) {
       setError('يرجى إدخال رقم هاتف ولي الأمر');
       return;
@@ -32,8 +81,41 @@ export const Login: React.FC = () => {
     // Slight delay for smooth animation
     setTimeout(async () => {
       const success = await login(phone, passcode, rememberMe);
-      if (!success) {
-        setError('بيانات الدخول غير صحيحة، يرجى التأكد والمحاولة مرة أخرى');
+      if (success) {
+        // Clear attempts on successful login
+        setAttempts(0);
+        setCooldownUntil(0);
+        localStorage.removeItem('login_attempts');
+        localStorage.removeItem('login_cooldown_until');
+      } else {
+        const nextAttempts = attempts + 1;
+        setAttempts(nextAttempts);
+        localStorage.setItem('login_attempts', nextAttempts.toString());
+
+        // Determine cooldown duration
+        let cooldownMs = 0;
+        if (nextAttempts >= 10) {
+          cooldownMs = 24 * 60 * 60 * 1000; // 1 day
+        } else if (nextAttempts >= 3) {
+          // 3 failed: 2 mins. Each subsequent adds 2 mins (3rd = 2m, 4th = 4m, 5th = 6m, etc.)
+          const minutes = 2 + (nextAttempts - 3) * 2;
+          cooldownMs = minutes * 60 * 1000;
+        }
+
+        if (cooldownMs > 0) {
+          const until = Date.now() + cooldownMs;
+          setCooldownUntil(until);
+          localStorage.setItem('login_cooldown_until', until.toString());
+          
+          if (nextAttempts >= 10) {
+            setError('لقد تجاوزت الحد الأقصى للمحاولات (١٠ محاولات). تم حظر حسابك لمدة يوم كامل (٢٤ ساعة).');
+          } else {
+            const minutes = 2 + (nextAttempts - 3) * 2;
+            setError(`بيانات الدخول غير صحيحة. لقد استنفدت ${nextAttempts} محاولات خاطئة. تم تفعيل الحظر المؤقت لمدة ${minutes} دقيقة لحماية حسابك.`);
+          }
+        } else {
+          setError(`بيانات الدخول غير صحيحة. متبقي لك ${3 - nextAttempts} محاولات قبل تفعيل الحظر المؤقت.`);
+        }
         setIsLoading(false);
       }
     }, 800);
@@ -222,7 +304,8 @@ export const Login: React.FC = () => {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-4 pr-12 py-3.5 rounded-xl border border-white/5 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner"
+                  disabled={isLoading || timeLeft > 0}
+                  className="w-full pl-4 pr-12 py-3.5 rounded-xl border border-white/5 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="أدخل رقم الهاتف المسجل"
                   dir="ltr"
                 />
@@ -241,7 +324,8 @@ export const Login: React.FC = () => {
                   type={showPassword ? "text" : "password"}
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-white/5 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner"
+                  disabled={isLoading || timeLeft > 0}
+                  className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-white/5 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none transition-all placeholder:text-slate-500 text-slate-100 shadow-inner disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="4 أحرف أو أرقام على الأقل"
                   dir="ltr"
                 />
@@ -249,7 +333,8 @@ export const Login: React.FC = () => {
               <button 
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-4 top-3.5 text-slate-400 hover:text-emerald-400 transition-colors focus:outline-none"
+                disabled={isLoading || timeLeft > 0}
+                className="absolute left-4 top-3.5 text-slate-400 hover:text-emerald-400 transition-colors focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -263,16 +348,17 @@ export const Login: React.FC = () => {
             className="flex items-center justify-between"
           >
             <label className="flex items-center cursor-pointer group">
-              <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ml-3 ${rememberMe ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500 bg-slate-800/50 group-hover:border-emerald-400'}`}>
+              <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ml-3 ${rememberMe ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500 bg-slate-800/50 group-hover:border-emerald-400'} ${timeLeft > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}>
                 {rememberMe && <CheckSquare size={14} className="text-slate-900" />}
               </div>
-              <input type="checkbox" className="hidden" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} />
+              <input type="checkbox" className="hidden" checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} disabled={timeLeft > 0} />
               <span className="text-sm font-medium text-slate-300 group-hover:text-emerald-100 transition-colors">تذكرني</span>
             </label>
             <button 
               type="button" 
               onClick={() => setIsResetting(true)}
-              className="text-sm font-medium text-emerald-400 hover:text-emerald-300 hover:underline transition-all"
+              disabled={timeLeft > 0}
+              className="text-sm font-medium text-emerald-400 hover:text-emerald-300 hover:underline transition-all disabled:opacity-30 disabled:cursor-not-allowed"
             >
               تغيير كلمة المرور؟
             </button>
@@ -283,11 +369,16 @@ export const Login: React.FC = () => {
              animate={{ opacity: 1, y: 0 }}
              transition={{ delay: 0.9 }}
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || timeLeft > 0}
             className="w-full flex items-center justify-center py-4 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-900 font-bold shadow-lg shadow-emerald-500/25 transition-all outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-70 disabled:cursor-not-allowed group cursor-pointer"
           >
             {isLoading ? (
               <span className="w-6 h-6 rounded-full border-2 border-slate-900/30 border-t-slate-900 animate-spin"></span>
+            ) : timeLeft > 0 ? (
+              <div className="flex items-center gap-2">
+                <Clock size={18} className="animate-pulse text-rose-800" />
+                <span className="text-sm text-rose-950 font-bold">الحساب مقفل: {formatTimeLeft(timeLeft)}</span>
+              </div>
             ) : (
               <>
                 <LogIn size={20} className="ml-2 group-hover:translate-x-1 transition-transform" />

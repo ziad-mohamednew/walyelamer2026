@@ -37,22 +37,31 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
   }, [hasSeenHint]);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+    let isMounted = true;
+
     // Load initial data and session
     const init = async () => {
       try {
         setLoading(true);
         const fetchedData = await fetchAppData();
-        setData(fetchedData);
+        if (isMounted) {
+          setData(fetchedData);
+        }
         
         // Check session
         const savedPhone = localStorage.getItem('parent_session');
-        if (savedPhone) {
+        if (savedPhone && isMounted) {
           setParent({ phone: savedPhone });
         }
       } catch (err) {
-        setError('تعذر تحميل البيانات. يرجى التحقق من اتصالك بالإنترنت.');
+        if (isMounted) {
+          setError('تعذر تحميل البيانات. يرجى التحقق من اتصالك بالإنترنت.');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
     init();
@@ -60,6 +69,7 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
     // Firebase Realtime Listener
     import('firebase/app').then(({ initializeApp }) => {
       import('firebase/database').then(({ getDatabase, ref, onValue }) => {
+        if (!isMounted) return;
         try {
           const app = initializeApp({
             databaseURL: "https://center-management-legislator-default-rtdb.europe-west1.firebasedatabase.app/"
@@ -67,7 +77,8 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
           const db = getDatabase(app);
           const dataRef = ref(db, 'center_management_data');
           
-          onValue(dataRef, (snapshot) => {
+          const unsub = onValue(dataRef, (snapshot) => {
+            if (!isMounted) return;
             if (snapshot.exists()) {
               const rawData = snapshot.val();
               // Small helper to transform objects to arrays
@@ -86,7 +97,7 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
                 messages: [], // Or handle messages appropriately
                 centerSettings: rawData.centerSettings || {
                   name: "سنتر المنارة",
-                  logo: "https://cdn-icons-png.flaticon.com/512/2940/2940651.png",
+                  logo: "/icon.png",
                   phone: "01000000000",
                   tips: [
                     "المتابعة اليومية سر النجاح والتفوق.",
@@ -101,12 +112,21 @@ export const AppProvider: React.FC<{children: ReactNode}> = ({ children }) => {
               setLastUpdate(new Date());
             }
           });
+
+          unsubscribe = unsub;
+          if (!isMounted) unsub();
         } catch(e) {
           console.error("Firebase listener error", e);
         }
       });
     });
 
+    return () => {
+      isMounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const login = async (phone: string, passcode: string, remember: boolean): Promise<boolean> => {
